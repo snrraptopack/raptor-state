@@ -1,7 +1,7 @@
 {
   "name": "@snrraptopack/raptor-state",
   "version": "1.0.0",
-  "exports": "./main.ts",
+  "exports": "./mod.ts",
   "description": "A robust, type-safe utility wrapper around Effector for idiomatic state management",
   "license": "MIT",
   "keywords": [
@@ -13,12 +13,23 @@
     "frontend",
     "state"
   ],
-  "homepage": "https://github.com/yourusername/raptor-state",
+  "homepage": "https://github.com/snrraptopack/raptor-state",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/raptor-state.git"
+    "url": "https://github.com/snrraptopack/raptor-state.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/raptor-state/issues"
+    "url": "https://github.com/snrraptopack/raptor-state/issues"
+  },
+  "publish": {
+    "exclude": [
+      "test-clean.ts",
+      "main.ts",
+      "examples.ts",
+      "test.ts",
+      "README-clean.md",
+      "REFACTOR-SUMMARY.md",
+      "SUMMARY.md"
+    ]
   }
 }

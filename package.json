@@ -1,0 +1,60 @@
+{
+  "name": "@snrraptopack/raptor-state",
+  "version": "1.0.0",
+  "description": "A robust, type-safe utility wrapper around Effector for idiomatic state management",
+  "main": "./mod.ts",
+  "types": "./mod.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./mod.ts",
+      "import": "./mod.ts",
+      "default": "./mod.ts"
+    }
+  },
+  "scripts": {
+    "test": "deno run --allow-net test-clean.ts",
+    "check": "deno check mod.ts",
+    "lint": "deno lint mod.ts src/",
+    "build": "deno check mod.ts"
+  },
+  "keywords": [
+    "state-management",
+    "effector",
+    "typescript",
+    "reactive",
+    "utility",
+    "frontend",
+    "state",
+    "react",
+    "async",
+    "fetch"
+  ],
+  "author": "snrraptopack",
+  "license": "MIT",
+  "peerDependencies": {
+    "effector": "^23.0.0"
+  },
+  "peerDependenciesMeta": {
+    "effector-react": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snrraptopack/raptor-state.git"
+  },
+  "bugs": {
+    "url": "https://github.com/snrraptopack/raptor-state/issues"
+  },
+  "homepage": "https://github.com/snrraptopack/raptor-state#readme",
+  "files": [
+    "src/**/*",
+    "mod.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
