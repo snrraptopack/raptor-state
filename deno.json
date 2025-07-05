@@ -1,5 +1,5 @@
 {
-  "name": "@your-username/raptor-state",
+  "name": "@snrraptopack/raptor-state",
   "version": "1.0.0",
   "description": "A robust, type-safe utility wrapper around Effector for state management",
   "author": "Your Name",
