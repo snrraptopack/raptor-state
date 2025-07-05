@@ -1,0 +1,40 @@
+{
+  "name": "@your-username/raptor-state",
+  "version": "1.0.0",
+  "description": "A robust, type-safe utility wrapper around Effector for state management",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/raptor-state.git"
+  },
+  "keywords": [
+    "effector",
+    "state-management",
+    "reactive",
+    "typescript",
+    "deno",
+    "state",
+    "store"
+  ],
+  "exports": "./mod.ts",
+  "tasks": {
+    "dev": "deno run --watch mod.ts",
+    "test": "deno run test-clean.ts",
+    "check": "deno check mod.ts",
+    "fmt": "deno fmt",
+    "lint": "deno lint"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "effector": "npm:effector@^23.4.0"
+  },
+  "publish": {
+    "include": [
+      "mod.ts",
+      "src/",
+      "README-clean.md",
+      "LICENSE"
+    ]
+  }
+}
