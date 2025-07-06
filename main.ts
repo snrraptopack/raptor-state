@@ -6,6 +6,7 @@ import {
   sample,
   type Store,
 } from "effector";
+import { useUnit, useStoreMap } from "effector-react";
 
 /**
  * RaptorState - A robust utility wrapper around Effector
@@ -16,15 +17,13 @@ export type StateValue<T> = T | null | undefined;
 
 export interface StateInstance<T> {
   /** The underlying Effector store */
-  readonly $state: Store<StateValue<T>>;
+  readonly $state: Store<T>;
   /** Current state value */
-  readonly value: StateValue<T>;
+  readonly value: T;
   /** Set new state value */
-  readonly set: (value: StateValue<T>) => StateValue<T>;
+  readonly set: (value: T) => T;
   /** Update state with a function */
-  readonly update: (
-    updater: (prev: StateValue<T>) => StateValue<T>,
-  ) => (prev: StateValue<T>) => StateValue<T>;
+  readonly update: (updater: (prev: T) => T) => (prev: T) => T;
   /** Reset state to initial value */
   readonly reset: () => void;
   /** Clear state (set to null) */
@@ -32,96 +31,102 @@ export interface StateInstance<T> {
   /** Check if state has a value (not null/undefined) */
   readonly hasValue: () => boolean;
   /** Get state value or throw if null/undefined */
-  readonly getValue: () => T;
+  readonly getValue: () => NonNullable<T>;
   /** Get state value or return default */
-  readonly getValueOr: (defaultValue: T) => T;
+  readonly getValueOr: <U>(defaultValue: U) => NonNullable<T> | U;
   /** Subscribe to state changes */
-  readonly subscribe: (fn: (value: StateValue<T>) => void) => () => void;
+  readonly subscribe: (fn: (value: T) => void) => () => void;
   /** Map state to derived value */
-  readonly map: <U>(fn: (value: StateValue<T>) => U) => Store<U>;
+  readonly map: <U>(fn: (value: T) => U) => Store<U>;
   /** Create async effect bound to this state */
-  readonly createEffect: <Params, Done = StateValue<T>, Fail = Error>(
+  readonly createEffect: <Params, Done = T, Fail = Error>(
     handler: (params: Params) => Promise<Done>,
   ) => Effect<Params, Done, Fail>;
 }
 
 /**
- * Create a new state instance with the given initial value
- * @param initialValue - The initial state value
- * @returns StateInstance with all utility methods
+ * Create a new state instance with a non-null initial value
+ * @param initialValue - The initial state value (non-null)
+ * @returns StateInstance with strict typing
  */
-export function State<T>(initialValue: StateValue<T> = null): StateInstance<T> {
-  // Core store
-  const $state = createStore<StateValue<T>>(initialValue);
+export function State<T>(initialValue: T): StateInstance<T>;
 
-  // Events
-  const set = createEvent<StateValue<T>>("set");
-  const update = createEvent<(prev: StateValue<T>) => StateValue<T>>("update");
+/**
+ * Create a new state instance that can hold null/undefined values
+ * @param initialValue - The initial state value (can be null/undefined)
+ * @returns StateInstance with nullable typing
+ */
+export function State<T>(initialValue?: T | null): StateInstance<T | null>;
+
+/**
+ * Implementation of the State function
+ */
+export function State<T>(initialValue?: T | null): StateInstance<T | null> {
+  // Use a unified implementation that works for both cases
+  const $state = createStore<T | null>(initialValue ?? null);
+  
+  const set = createEvent<T | null>("set");
+  const update = createEvent<(prev: T | null) => T | null>("update");
   const reset = createEvent<void>("reset");
   const clear = createEvent<void>("clear");
-
-  // Wire up events to store
+  
   $state
     .on(set, (_, payload) => payload)
     .on(update, (state, updater) => updater(state))
     .reset(reset)
     .reset(clear);
-
-  // Handle clear event
+  
   clear.watch(() => set(null));
-
+  
   return {
     $state,
-
+    
     get value() {
       return $state.getState();
     },
-
+    
     set,
     update,
     reset,
     clear,
-
+    
     hasValue() {
       const current = $state.getState();
       return current !== null && current !== undefined;
     },
-
+    
     getValue() {
       const current = $state.getState();
       if (current === null || current === undefined) {
         throw new Error("State value is null or undefined");
       }
-      return current as T;
+      return current;
     },
-
-    getValueOr(defaultValue: T) {
+    
+    getValueOr<U>(defaultValue: U) {
       const current = $state.getState();
-      return (current !== null && current !== undefined)
-        ? current as T
-        : defaultValue;
+      return (current !== null && current !== undefined) ? current : defaultValue;
     },
-
-    subscribe(fn: (value: StateValue<T>) => void) {
+    
+    subscribe(fn: (value: T | null) => void) {
       return $state.watch(fn);
     },
-
-    map<U>(fn: (value: StateValue<T>) => U) {
+    
+    map<U>(fn: (value: T | null) => U) {
       return $state.map(fn);
     },
-
-    createEffect<Params, Done = StateValue<T>, Fail = Error>(
+    
+    createEffect<Params, Done = T | null, Fail = Error>(
       handler: (params: Params) => Promise<Done>,
     ) {
       const fx = createEffect<Params, Done, Fail>(handler);
-
-      // Auto-connect successful results to state if they match the type
+      
       fx.doneData.watch((result) => {
         if (result !== undefined) {
-          set(result as StateValue<T>);
+          set(result as T | null);
         }
       });
-
+      
       return fx;
     },
   };
@@ -735,6 +740,54 @@ export function validatedState<T>(
 
 // Re-export useful Effector utilities
 export { combine, merge, sample } from "effector";
+
+// React Integration
+// Re-export Effector's React utilities
+export { useStoreMap } from "effector-react";
+
+/**
+ * React hook to use RaptorState with automatic re-renders (using Effector's native integration)
+ * @param state - StateInstance to subscribe to
+ * @returns Current state value with automatic React updates
+ */
+export function useRaptorState<T>(state: StateInstance<T>): T {
+  return useUnit(state.$state);
+}
+
+/**
+ * React hook for async state with loading/error handling
+ * @param asyncState - AsyncState instance
+ * @returns Object with data, loading, error, and execute function
+ */
+export function useAsyncState<Params, Data, Fail = Error>(
+  asyncState: ReturnType<typeof asyncState<Params, Data, Fail>>
+) {
+  const data = useUnit(asyncState.data.$state);
+  const loading = useUnit(asyncState.loading.$state);
+  const error = useUnit(asyncState.error.$state);
+
+  return {
+    data,
+    loading,
+    error,
+    isLoading: asyncState.isLoading,
+    hasError: asyncState.hasError,
+    hasData: asyncState.hasData,
+    execute: asyncState.execute,
+    reset: asyncState.reset,
+  };
+}
+
+/**
+ * React hook for computed state
+ * @param computedState - Computed state instance
+ * @returns Computed value that re-renders on changes
+ */
+export function useComputed<T>(
+  computedState: Pick<StateInstance<T>, "$state" | "value" | "subscribe" | "map">
+): T {
+  return useUnit(computedState.$state);
+}
 
 // Usage examples:
 /*
